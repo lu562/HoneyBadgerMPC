@@ -58,12 +58,14 @@ class Mpc(object):
         # Store opened shares until ready to reconstruct
         # playerid => { [shareid => Future share] }
         self._share_buffers = tuple(defaultdict(asyncio.Future) for _ in range(n))
+        ######################
+
 
         # Batch reconstruction is handled slightly differently,
         # We'll create a separate queue for received values
         # { shareid => Queue() }
         self._sharearray_buffers = defaultdict(asyncio.Queue)
-
+        self._vss_buffers = defaultdict(asyncio.Future)
         # Dynamically create concrete subclasses of the classes using ourself as
         # their context property
         self.Share = type("Share", (Share,), {"context": self})
@@ -273,6 +275,8 @@ class Mpc(object):
 
                 # Forward to the right queue
                 self._sharearray_buffers[shareid].put_nowait((j, (tag, share)))
+            elif tag == "VSS":
+                self._vss_buffers[shareid].set_result(share)
 
         return True
 
