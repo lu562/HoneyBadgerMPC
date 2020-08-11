@@ -84,7 +84,7 @@ class VSSShare:
             raise FieldsNotIdentical
         if len(self.commitments) != len(other.commitments):
             raise DegreeNotIdentical
-        sum_commitment = [group256.serialize(group256.deserialize(self.commitments[i]) * group256.deserialize(self.commitments[i])) for i in range(len(self.commitments))]
+        sum_commitment = [group256.serialize(group256.deserialize(self.commitments[i]) * group256.deserialize(other.commitments[i])) for i in range(len(self.commitments))]
         return VSSShare(self.ctx, self.value + other.value,self.value_prime + other.value_prime, sum_commitment, True)
     async def open(self):
         res = self.ctx.GFElementFuture()
