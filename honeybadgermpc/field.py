@@ -117,7 +117,10 @@ class GFElement(FieldElement):
 
     def __pow__(self, exponent):
         """Exponentiation."""
-        return GFElement(pow(self.value, exponent, self.modulus), self.field)
+        if isinstance(exponent,(GFElement)):
+            return GFElement(pow(self.value, exponent.value, self.modulus), self.field)
+        else:
+            return GFElement(pow(self.value, exponent, self.modulus), self.field)
 
     def __neg__(self):
         """Negation."""
