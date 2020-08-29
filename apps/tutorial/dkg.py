@@ -436,7 +436,7 @@ async def run(ctx, **kwargs):
     stop = time.time()
     print(f"total online time for bit Decomposation is: {stop - start} seconds")
     b_open = await ctx.ShareArray(b).open()
-    print(b_open)
+#     print(b_open)
 
     # selection_bits = [ctx.Share(1) for _ in range(256)]
     # m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
