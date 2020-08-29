@@ -25,11 +25,11 @@ mpc_config = {
     MixinConstants.MultiplyShare: BeaverMultiply(),
 }
 # public parameters
-sect571k1 = 0x020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001
-sect256k1 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-p = sect571k1
+# sect571k1 = 0x020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001
+# secp256k1 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+p = 0x020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001
 Field = GF(p)
-group256 = ECGroup(secp256k1)
+group256 = ECGroup(sect571k1)
 g = group256.init(G, 999999)
 h = group256.init(G, 20)
 KAPPA = 16 # security parameter
@@ -290,7 +290,7 @@ async def batch_PreMul(ctx, shares, offline):
         w.append([0 for _ in range(i)])
         z.append([0 for _ in range(i)])
         result.append([0 for _ in range(i)])
-    print(len(shares))
+
     #r, s, u = await batch_offline_PreMul(ctx, len(shares))
     r = offline[0]
     s = offline[1]
@@ -416,7 +416,7 @@ async def run(ctx, **kwargs):
     start = time.time()
     pk = group256.init(G, 1)
     for i in range(k):
-        shares[i] = await V.share(i, random.randint(1,10000000000000))
+        shares[i] = await V.share(i, random.randint(1,10000000))
         pk = pk * group256.deserialize(shares[i].commitments[0])
     stop = time.time()
     print(f"running time for DKG is: {stop - start} seconds")
@@ -443,11 +443,7 @@ async def run(ctx, **kwargs):
     # result = await OT(ctx, selection_bits, m_0, m_1)
     # stop = time.time()
     # print(f"total online time for 256-bit OT is: {stop - start} seconds")
-    a = ctx.Share(1)
-    b = ctx.Share(5)
-    c = a * b
-    c_open = await c.open()
-    print(c_open)
+
 
 
     # x = [ctx.Share(1),ctx.Share(1),ctx.Share(1),ctx.Share(0),ctx.Share(1)]
