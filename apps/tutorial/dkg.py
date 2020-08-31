@@ -411,15 +411,15 @@ async def OT_2PC(ctx, message_0, message_1, b):
 
 async def run(ctx, **kwargs):
     k = kwargs["k"]
-#     V = VSS(ctx)
-#     shares = [0 for _ in range(k)]
-#     start = time.time()
-#     pk = group256.init(G, 1)
-#     for i in range(k):
-#         shares[i] = await V.share(i, random.randint(1,10000000))
-#         pk = pk * group256.deserialize(shares[i].commitments[0])
-#     stop = time.time()
-#     print(f"running time for DKG is: {stop - start} seconds")
+    V = VSS(ctx)
+    shares = [0 for _ in range(k)]
+    start = time.time()
+    pk = group256.init(G, 1)
+    for i in range(k):
+        shares[i] = await V.share(i, random.randint(1,10000000))
+        pk = pk * group256.deserialize(shares[i].commitments[0])
+    stop = time.time()
+    print(f"running time for DKG is: {stop - start} seconds")
 
 
     # to send a vss share, use "await V.share(dealer, value)"
@@ -438,13 +438,13 @@ async def run(ctx, **kwargs):
 #     b_open = await ctx.ShareArray(b).open()
 #     print(b_open)
 
-    selection_bits = [ctx.Share(1) for _ in range(256)]
-    m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-    m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-    start = time.time()
-    result = await OT(ctx, selection_bits, m_0, m_1)
-    stop = time.time()
-    print(f"total online time for 256-bit OT is: {stop - start} seconds")
+#     selection_bits = [ctx.Share(1) for _ in range(256)]
+#     m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+#     m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+#     start = time.time()
+#     result = await OT(ctx, selection_bits, m_0, m_1)
+#     stop = time.time()
+#     print(f"total online time for 256-bit OT is: {stop - start} seconds")
 
 
 
