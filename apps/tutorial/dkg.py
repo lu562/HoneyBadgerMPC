@@ -69,12 +69,19 @@ def Pederson_verify(g, h, x, share, serialized_commitments):
     else:
         return False
 
+# DLog commitments
+def DLog_commit(g, s):
+
+    return group256.serialize(g ** group256.init(ZR, int(s.value)))
+
 class VSSShare:
-    def __init__(self, ctx, value, value_prime, commitments, valid):
+    def __init__(self, ctx, value, value_prime, commitments, dlog_commitment, proof, valid):
         self.ctx = ctx
         self.value = value
         self.value_prime = value_prime
         self.commitments = commitments
+        self.dlog_commitment = dlog_commitment
+        self.proof = proof
         self.valid = valid
 
     def __add__(self, other):
@@ -88,7 +95,10 @@ class VSSShare:
         if len(self.commitments) != len(other.commitments):
             raise DegreeNotIdentical
         sum_commitment = [group256.serialize(group256.deserialize(self.commitments[i]) * group256.deserialize(other.commitments[i])) for i in range(len(self.commitments))]
-        return VSSShare(self.ctx, self.value + other.value,self.value_prime + other.value_prime, sum_commitment, True)
+        sum_dlog_commitment = group256.serialize(group256.deserialize(self.dlog_commitment) * group256.deserialize(other.dlog_commitment))
+
+        return VSSShare(self.ctx, self.value + other.value,self.value_prime + other.value_prime, sum_commitment, sum_dlog_commitment, True)
+
     async def open(self):
         res = self.ctx.GFElementFuture()
         temp_share = self.ctx.preproc.get_zero(self.ctx) + self.ctx.Share(int(self.value.value))
@@ -119,6 +129,7 @@ class VSS:
         return share_id
 
     async def share(self, dealer_id, value):
+
         if type(value) is int:
             value = Field(value)
         shareid = self._get_share_id()
@@ -126,9 +137,12 @@ class VSS:
         if dealer_id == self.my_id:
             # generate polynomials
             poly_f = self.poly.random(self.t, value)
-            poly_f_prime = self.poly.random(self.t, Field.random())
+            r_prime = Field.random()
+            poly_f_prime = self.poly.random(self.t, r_prime)
 
             commitments = Pederson_commit(self.g, self.h, poly_f.coeffs, poly_f_prime.coeffs)
+            dlog = DLog_commit(self.g, poly_f.coeffs[0])
+            proof = nizk_gen(self.g, self.h, dlog, commitments[0], value, r_prime)
             messages = [0 for _ in range(self.N)]
             # send f(1) to party 0. we cannot send f(0) as it is the secret
             for i in range(self.N):
@@ -136,7 +150,8 @@ class VSS:
 
 
             for dest in range(self.N):
-                self.send(dest, ("VSS", shareid, [commitments, messages[dest]]))
+                self.send(dest, ("VSS", shareid, [commitments, messages[dest], dlog, proof]))
+
 
         # Share phase of recipient parties(including dealer)        
         share_buffer = self.ctx._vss_buffers[shareid] 
@@ -145,10 +160,49 @@ class VSS:
         for i in msg:  
             commitments = i.result()[0]
             share = i.result()[1]
+            dlog = i.result()[2]
+            proof = i.result()[3]
             valid = Pederson_verify(self.g, self.h, self.my_id + 1, share, commitments)
-            
-            return VSSShare(self.ctx, share[0], share[1], commitments, valid)
+            if not nizk_verify(self.g, self.h, proof, dlog, commitments[0]):
+                valid = 0
+            return VSSShare(self.ctx, share[0], share[1], commitments, dlog, proof, valid)
 
+def nizk_gen(g, h, dlog_commits, pedersen_commits, RHO, RHO_dash):
+
+    dlog_commits = group256.deserialize(dlog_commits)
+    pedersen_commits = group256.deserialize(pedersen_commits)
+    RHO = group256.init(ZR, int(RHO.value))
+    RHO_dash = group256.init(ZR, int(RHO_dash.value))
+    #Need ZKP only for the first element 
+    v1 , v2 = group256.random(ZR) , group256.random(ZR) 
+    V1 = g ** v1 
+    V2 = h ** v2 
+    c = group256.hash((g,h, dlog_commits, pedersen_commits,V1, V2), ZR) 
+    u1 = v1 - (c * RHO)
+    u2 = v2 - (c * RHO_dash)
+    serialized_proof = [group256.serialize(c), group256.serialize(u1), group256.serialize(u2)]
+    return serialized_proof
+
+def nizk_verify(g, h, proof, dlog, pederson):
+    c = group256.deserialize(proof[0])
+    u1 = group256.deserialize(proof[1])
+    u2 = group256.deserialize(proof[2])
+    C1 = group256.deserialize(dlog)
+    C2 = group256.deserialize(pederson)
+
+    v1 = (g ** u1) * (C1 ** c)
+    v2 = (h ** u2) * ((C2* (C1 ** (-1))) ** c)
+    c_prime = group256.hash((g, h, C1, C2, v1, v2))
+    # hash function in charm is buggy, this is temporary fix
+    c_str = str(c)
+    c_str = c_str[:len(c_str)-30]
+    c_dash_str = str(c_prime)
+    c_dash_str = c_dash_str[:len(c_dash_str)-30]
+
+    if c_str == c_dash_str:
+        return True
+    else:
+        return False
 
 #######################################    Bit Decomposation        ##############################
 # MPC operations for fixed point
@@ -417,7 +471,7 @@ async def run(ctx, **kwargs):
     pk = group256.init(G, 1)
     for i in range(k):
         shares[i] = await V.share(i, random.randint(1,10000000))
-        pk = pk * group256.deserialize(shares[i].commitments[0])
+        pk = pk * group256.deserialize(shares[i].dlog_commitment)
     stop = time.time()
     print(f"running time for DKG is: {stop - start} seconds")
 
@@ -438,13 +492,13 @@ async def run(ctx, **kwargs):
 #     b_open = await ctx.ShareArray(b).open()
 #     print(b_open)
 
-#     selection_bits = [ctx.Share(1) for _ in range(256)]
-#     m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-#     m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-#     start = time.time()
-#     result = await OT(ctx, selection_bits, m_0, m_1)
-#     stop = time.time()
-#     print(f"total online time for 256-bit OT is: {stop - start} seconds")
+    # selection_bits = [ctx.Share(1) for _ in range(256)]
+    # m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+    # m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+    # start = time.time()
+    # result = await OT(ctx, selection_bits, m_0, m_1)
+    # stop = time.time()
+    # print(f"total online time for 256-bit OT is: {stop - start} seconds")
 
 
 
@@ -489,15 +543,14 @@ if __name__ == "__main__":
         # pp_elements = FakePreProcessedElements()
         # if HbmpcConfig.my_id == 0:
             
-        #     pp_elements.generate_zeros(200, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.generate_triples(150000, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.generate_bits(10000, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.generate_rands(66000, HbmpcConfig.N, HbmpcConfig.t)
+        # #     pp_elements.generate_zeros(200, HbmpcConfig.N, HbmpcConfig.t)
+        # #     pp_elements.generate_triples(150000, HbmpcConfig.N, HbmpcConfig.t)
+        # #     pp_elements.generate_bits(10000, HbmpcConfig.N, HbmpcConfig.t)
+        # #     pp_elements.generate_rands(66000, HbmpcConfig.N, HbmpcConfig.t)
 
-
-        #     # pp_elements.generate_triples(600, HbmpcConfig.N, HbmpcConfig.t)
-        #     # pp_elements.generate_rands(600, HbmpcConfig.N, HbmpcConfig.t)
-        #     # pp_elements.preprocessing_done()
+        #     pp_elements.generate_triples(600, HbmpcConfig.N, HbmpcConfig.t)
+        #     pp_elements.generate_rands(600, HbmpcConfig.N, HbmpcConfig.t)
+        #     pp_elements.preprocessing_done()
         # else:
         #     loop.run_until_complete(pp_elements.wait_for_preprocessing())
 
