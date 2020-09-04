@@ -411,15 +411,15 @@ async def OT_2PC(ctx, message_0, message_1, b):
 
 async def run(ctx, **kwargs):
     k = kwargs["k"]
-#     V = VSS(ctx)
-#     shares = [0 for _ in range(k)]
-#     start = time.time()
-#     pk = group256.init(G, 1)
-#     for i in range(k):
-#         shares[i] = await V.share(i, random.randint(1,10000000))
-#         pk = pk * group256.deserialize(shares[i].commitments[0])
-#     stop = time.time()
-#     print(f"running time for DKG is: {stop - start} seconds")
+    V = VSS(ctx)
+    shares = [0 for _ in range(k)]
+    start = time.time()
+    pk = group256.init(G, 1)
+    for i in range(k):
+        shares[i] = await V.share(i, random.randint(1,10000000))
+        pk = pk * group256.deserialize(shares[i].commitments[0])
+    stop = time.time()
+    print(f"running time for DKG is: {stop - start} seconds")
 
 
     # to send a vss share, use "await V.share(dealer, value)"
@@ -429,12 +429,12 @@ async def run(ctx, **kwargs):
     # open_c = await c.open()
     # print(open_c)
 
-    a = ctx.Share(2**255 + 2**25 + 2**111 + 2**122 + 2**133 + 2**166 + 2**177 + 2**188 + 2**199 + 2**14 + 2**13 + 2**10 + 2**5 + 2**3 + 2**2)
-    r, s, u = await batch_offline_PreMul(ctx, len(bin(a.v.value)) - 2)
-    start = time.time()
-    b = await BitDec(ctx, a, len(bin(a.v.value)) - 2, [r,s,u])
-    stop = time.time()
-    print(f"total online time for bit Decomposation is: {stop - start} seconds")
+#     a = ctx.Share(2**255 + 2**25 + 2**111 + 2**122 + 2**133 + 2**166 + 2**177 + 2**188 + 2**199 + 2**14 + 2**13 + 2**10 + 2**5 + 2**3 + 2**2)
+#     r, s, u = await batch_offline_PreMul(ctx, len(bin(a.v.value)) - 2)
+#     start = time.time()
+#     b = await BitDec(ctx, a, len(bin(a.v.value)) - 2, [r,s,u])
+#     stop = time.time()
+#     print(f"total online time for bit Decomposation is: {stop - start} seconds")
 #     b_open = await ctx.ShareArray(b).open()
 #     print(b_open)
 
