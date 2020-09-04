@@ -429,22 +429,22 @@ async def run(ctx, **kwargs):
     # open_c = await c.open()
     # print(open_c)
 
-#     a = ctx.Share(2**255 + 2**25 + 2**111 + 2**122 + 2**133 + 2**166 + 2**177 + 2**188 + 2**199 + 2**14 + 2**13 + 2**10 + 2**5 + 2**3 + 2**2)
-#     r, s, u = await batch_offline_PreMul(ctx, len(bin(a.v.value)) - 2)
-#     start = time.time()
-#     b = await BitDec(ctx, a, len(bin(a.v.value)) - 2, [r,s,u])
-#     stop = time.time()
-#     print(f"total online time for bit Decomposation is: {stop - start} seconds")
+    a = ctx.Share(2**255 + 2**25 + 2**111 + 2**122 + 2**133 + 2**166 + 2**177 + 2**188 + 2**199 + 2**14 + 2**13 + 2**10 + 2**5 + 2**3 + 2**2)
+    r, s, u = await batch_offline_PreMul(ctx, len(bin(a.v.value)) - 2)
+    start = time.time()
+    b = await BitDec(ctx, a, len(bin(a.v.value)) - 2, [r,s,u])
+    stop = time.time()
+    print(f"total online time for bit Decomposation is: {stop - start} seconds")
 #     b_open = await ctx.ShareArray(b).open()
 #     print(b_open)
 
-    selection_bits = [ctx.Share(1) for _ in range(256)]
-    m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-    m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
-    start = time.time()
-    result = await OT(ctx, selection_bits, m_0, m_1)
-    stop = time.time()
-    print(f"total online time for 256-bit OT is: {stop - start} seconds")
+#     selection_bits = [ctx.Share(1) for _ in range(256)]
+#     m_0 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+#     m_1 = [ctx.preproc.get_rand(ctx) for _ in range(256)]
+#     start = time.time()
+#     result = await OT(ctx, selection_bits, m_0, m_1)
+#     stop = time.time()
+#     print(f"total online time for 256-bit OT is: {stop - start} seconds")
 
 
 
