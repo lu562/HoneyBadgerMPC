@@ -839,7 +839,7 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     k = 10
-    # try:
+    try:
     #     pp_elements = FakePreProcessedElements()
     #     if HbmpcConfig.my_id == 0:
             
