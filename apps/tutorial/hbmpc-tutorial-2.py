@@ -524,7 +524,7 @@ async def batch_cpp_matrix_mul(ctx, A, B):
     with open(file_path, "r") as f:
         cpp_time = f.readline()
     # logging.info(f"Batch_cpp_mul, pure computation time each call: {cpp_time}")
-    total_mul_time = total_mul_time + float(cpp_time)
+    # total_mul_time = total_mul_time + float(cpp_time)
     # logging.info(f"mul time now:: {total_mul_time}")
     #load result from files
     file_name = f"matrix_{ctx.myid}_C.output"
@@ -595,7 +595,7 @@ async def batch_cpp_matrix_add(ctx, A, B):
     with open(file_path, "r") as f:
         cpp_time = f.readline()
 
-    total_add_time = total_add_time + float(cpp_time)
+    # total_add_time = total_add_time + float(cpp_time)
     # logging.info(f"add time now:: {total_add_time}")
 
     #load result from files
@@ -776,13 +776,7 @@ def triple_generation_for_multi_matrix(ctx, k, n):
 
     return super_triple, normal_triple
 
-# async def test(ctx, **kwargs):
-#     k = kwargs["k"]
-#     n = 64
-#     matrix_a = [[ctx.Share(3) for _ in range(k)] for _ in range(k)]
 
-#     res = await cpp_matrix_mul(ctx, [matrix_a for _ in range(n)], [matrix_a for _ in range(n)])
-#     return res
 
 async def simple_matrix(ctx, **kwargs):
     global total_add_time
@@ -790,9 +784,9 @@ async def simple_matrix(ctx, **kwargs):
     global total_communicate_time
     k = kwargs["k"]
     n = 1
-    p = 1024
-    matrix_a = [[ctx.Share(3) for _ in range(k)] for _ in range(k)]
-    matrix_b = [[ctx.Share(5) for _ in range(k)] for _ in range(k)]
+    p = 256
+    matrix_a = [[ctx.Share(i+j) for i in range(k)] for j in range(k)]
+    # matrix_b = [[ctx.Share(5) for _ in range(k)] for _ in range(k)]
     await run_command_sync("chmod 777 ./apps/tutorial/cpp/multi_matrix_add")
     await run_command_sync("chmod 777 ./apps/tutorial/cpp/multi_matrix_sub")
     await run_command_sync("chmod 777 ./apps/tutorial/cpp/multi_matrix_mul")
@@ -808,10 +802,15 @@ async def simple_matrix(ctx, **kwargs):
     stop = time.time()
     last_time = stop - start
 
-    logging.info(f"total local add time:{total_add_time}")
-    logging.info(f"total local mul time:{total_mul_time}")
-    logging.info(f"pure communication time:{total_communicate_time}")
-    logging.info(f"actual last time:{last_time}")
+    start2 = time.time()
+    res = await state_of_art_power(ctx, matrix_a, p, normal_triple)
+    stop2 = time.time()
+    last_time2 = stop2 - start2
+    # logging.info(f"total local add time:{total_add_time}")
+    # logging.info(f"total local mul time:{total_mul_time}")
+    # logging.info(f"pure communication time:{total_communicate_time}")
+    logging.info(f"online time for our protocol:{last_time}")
+    logging.info(f"online time for state of the art protocol:{last_time2}")
     return res
 
 async def _run(peers, n, t, my_id, k):
@@ -840,18 +839,17 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     k = 10
-    try:
-        # pp_elements = FakePreProcessedElements()
-        # # k = 3 # How many of each kind of preproc
-        # if HbmpcConfig.my_id == 0:
+    # try:
+    #     pp_elements = FakePreProcessedElements()
+    #     if HbmpcConfig.my_id == 0:
             
-        #     # pp_elements.generate_bits(k* 1000, HbmpcConfig.N, HbmpcConfig.t)
-        #     # pp_elements.generate_rands(k * k * 5, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.generate_triples(k * k * 5, HbmpcConfig.N, HbmpcConfig.t)
-        #     # pp_elements.generate_zeros(k * k, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.preprocessing_done()
-        # else:
-        #     loop.run_until_complete(pp_elements.wait_for_preprocessing())
+    #         # pp_elements.generate_bits(k* 1000, HbmpcConfig.N, HbmpcConfig.t)
+    #         # pp_elements.generate_rands(k * k * 5, HbmpcConfig.N, HbmpcConfig.t)
+    #         pp_elements.generate_triples(k * k * 5, HbmpcConfig.N, HbmpcConfig.t)
+    #         # pp_elements.generate_zeros(k * k, HbmpcConfig.N, HbmpcConfig.t)
+    #         pp_elements.preprocessing_done()
+    #     else:
+    #         loop.run_until_complete(pp_elements.wait_for_preprocessing())
 
         loop.run_until_complete(
             _run(HbmpcConfig.peers, HbmpcConfig.N, HbmpcConfig.t, HbmpcConfig.my_id, k)
