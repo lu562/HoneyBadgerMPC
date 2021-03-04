@@ -40,7 +40,7 @@ KAPPA = 32  # Statistical security parameter
 K = 64  # Total number of padding bits ()
 p = modulus = Subgroup.BLS12_381
 Field = GF(p)
-
+print(p)
 
 def find_divisor(l):
     left = l[0]
@@ -136,23 +136,41 @@ async def run(ctx, **kwargs):
     precompute_randoms, product = decision_tree_offline(ctx, len(poly), len(poly[b][0]) + len(poly[b][1]) + 1)
 
     # online phase
-    test_input = [FixedPoint(ctx,1), FixedPoint(ctx,0), FixedPoint(ctx,1), FixedPoint(ctx,0), FixedPoint(ctx,1), FixedPoint(ctx,0), FixedPoint(ctx,1), FixedPoint(ctx,0),]
+    test_input = [FixedPoint(ctx,1), FixedPoint(ctx,2), FixedPoint(ctx,3), FixedPoint(ctx,5), FixedPoint(ctx,4), FixedPoint(ctx,6), FixedPoint(ctx,1), FixedPoint(ctx,0),]
+    print("test input from client: (1, 2, 3, 5, 4, 6, 1, 0)")    
     virables = []
     ids = []
     start =  time.time()
     for node_id, terms in comparison.items():
         ids.append(int(node_id))
         virables.append(FixedPoint(ctx,terms[1]) - test_input[terms[0]])
-
+    logging.info("start secure comparison")
     comparison_result = await batch_ltz(ctx, virables, rs, rs_msb)
+    logging.info("secure comparison finished")
     for i in range(len(comparison_result)):
         comparison_result[i] = (comparison_result[i] - Field(1)/Field(2)) * Field(2)
-      
+
     minus_one_terms = [ (i - Field(1)) for i in comparison_result]
     plus_one_terms = [ (i + Field(1)) for i in comparison_result]
 
     poly_terms = []
     poly_id = []
+    # poly_print = []
+    # for key,value in poly.items():
+    #     s = ''
+    #     for i in value[0]:
+    #         s = s + f"(x{i} - 1)"
+    #     for i in value[1]:
+    #         s = s + f"(x{i} + 1)"
+    #     # s = s + f"/{divisors[key]}"
+    #     poly_print.append(s)    
+
+    # print("To evaluate the decision tree, we need to evaluate 256 polynomial terms, below are first ten of them:")
+    # for i in range(10):
+    #     print(poly_print[i])
+
+
+
     for key,value in poly.items():
         poly_id.append(key)
         terms = []
@@ -162,21 +180,23 @@ async def run(ctx, **kwargs):
             terms.append(plus_one_terms[ids.index(int(i))])
         terms.append(values[int(key)])
         poly_terms.append(terms)
+
     logging.info("start evaluation")
     poly_results = await batch_decision_tree_eval(ctx, poly_terms, precompute_randoms, product)
     logging.info("evaluation finished")
     middle = time.time()
     for i in range(len(poly_results)):
         poly_results[i] = poly_results[i] * divisors[poly_id[i]]
+
     stop =  time.time()
-    logging.info(f"time for division: {stop - middle}")
+    # logging.info(f"time for division: {stop - middle}")
     logging.info(f"total online time: {stop - start}")
-    # open_result = await ctx.ShareArray(poly_results).open() 
+
+    open_result = await ctx.ShareArray(poly_results).open() 
     # print(open_result)
-
-
-
-
+    for i in range(len(open_result)):
+        if open_result[i].value == 1:
+            print(f"The evaluation result is stored in leaf node {i}.")
     # logging.info("Starting _prog")
     # a = FixedPoint(ctx, 99999999.5)
     # b = FixedPoint(ctx, -3.8)
@@ -224,15 +244,22 @@ if __name__ == "__main__":
     loop.set_debug(True)
     k = 1000
     try:
-#         pp_elements = FakePreProcessedElements()
-#         if HbmpcConfig.my_id == 0:
+        pp_elements = FakePreProcessedElements()
+        if HbmpcConfig.my_id == 0:
             
-#             pp_elements.generate_zeros(20000, HbmpcConfig.N, HbmpcConfig.t)
-#             pp_elements.generate_triples(260000, HbmpcConfig.N, HbmpcConfig.t)
-#             pp_elements.generate_bits(20000, HbmpcConfig.N, HbmpcConfig.t)
-#             pp_elements.preprocessing_done()
-#         else:
-#             loop.run_until_complete(pp_elements.wait_for_preprocessing())
+            pp_elements.generate_zeros(2000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_triples(2600, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_bits(2000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.preprocessing_done()
+
+            
+            # pp_elements.generate_zeros(20000, HbmpcConfig.N, HbmpcConfig.t)
+            # pp_elements.generate_triples(260000, HbmpcConfig.N, HbmpcConfig.t)
+            # pp_elements.generate_bits(20000, HbmpcConfig.N, HbmpcConfig.t)
+            # pp_elements.preprocessing_done()
+
+        else:
+            loop.run_until_complete(pp_elements.wait_for_preprocessing())
 
         loop.run_until_complete(
             _run(HbmpcConfig.peers, HbmpcConfig.N, HbmpcConfig.t, HbmpcConfig.my_id, k)
