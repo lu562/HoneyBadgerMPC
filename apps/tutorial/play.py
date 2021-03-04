@@ -100,12 +100,12 @@ async def batch_decision_tree_eval(ctx, terms, precompute_randoms, product):
 
     m = await (ctx.ShareArray(combined_terms) * ctx.ShareArray(combined_precompute_randoms))
     open_m = await m.open()
-    for i in range(num_of_terms):
-        mul = ctx.field(1)
-        for j in range(num_of_virables):
-            mul = mul * open_m[i * num_of_virables + j]
-        result[i] = mul * product[i]
-    return result
+#     for i in range(num_of_terms):
+#         mul = ctx.field(1)
+#         for j in range(num_of_virables):
+#             mul = mul * open_m[i * num_of_virables + j]
+#         result[i] = mul * product[i]
+    return product
 
 async def run(ctx, **kwargs):
 
