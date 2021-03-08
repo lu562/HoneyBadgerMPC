@@ -331,7 +331,7 @@ async def run(ctx, **kwargs):
     # # logging.info(f"A*B:{AtimesB} A<B:{AltB} B<A:{BltA}")
     # logging.info("Finished _prog")
 
-    k = 2000
+    k = 2500
     # Our method
     rs = [ctx.Share(10)] * k
     rs_msb = [ctx.Share(0)] * k
