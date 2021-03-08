@@ -26,7 +26,7 @@ F = 32  # The precision (binary bits)
 This implementation of the library is not completely hiding. This leaks information about the bits used in computation which is determinied by the security parameter Kappa.
 In particular, we leak O(1/(2^Kappa)) information theorotic bits per operation on a floating point secret.
 """
-KAPPA = 32  # Statistical security parameter
+KAPPA = 16  # Statistical security parameter
 K = 64  # Total number of padding bits ()
 p = modulus = Subgroup.BLS12_381
 Field = GF(p)
