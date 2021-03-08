@@ -332,26 +332,26 @@ async def run(ctx, **kwargs):
     # logging.info("Finished _prog")
 
     k = 8000
-    # Our method
-    rs = [ctx.Share(10)] * k
-    rs_msb = [ctx.Share(0)] * k
-    variables = [FixedPoint(ctx,5123123)] * k
-    s_time = time.time()
-    comparison_result = await batch_ltz(ctx, variables, rs, rs_msb)
-    e_time = time.time()
-    logging.info(f"total online time for our method: {e_time - s_time}")
-    # #SecureNN method
-    # r, r_bits = random2m(ctx, BIT_LENGTH)
-    # # r = ctx.Share(10)
-    # # r_bits = [ctx.Share(0), ctx.Share(1), ctx.Share(0), ctx.Share(1)] + [ctx.Share(0)] * 156
-    # k = 100
+    # # Our method
+    # rs = [ctx.Share(10)] * k
+    # rs_msb = [ctx.Share(0)] * k
+    # variables = [FixedPoint(ctx,5123123)] * k
     # s_time = time.time()
-    # # result = await ltz2(ctx, ctx.Share(5123123), r, r_bits)
-    # result = await batch_ltz2(ctx, [ctx.Share(5123123)] * k, [r] * k, [r_bits] * k)
+    # comparison_result = await batch_ltz(ctx, variables, rs, rs_msb)
     # e_time = time.time()
+    # logging.info(f"total online time for our method: {e_time - s_time}")
+    #SecureNN method
+    r, r_bits = random2m(ctx, BIT_LENGTH)
+    # r = ctx.Share(10)
+    # r_bits = [ctx.Share(0), ctx.Share(1), ctx.Share(0), ctx.Share(1)] + [ctx.Share(0)] * 156
+    k = 100
+    s_time = time.time()
+    # result = await ltz2(ctx, ctx.Share(5123123), r, r_bits)
+    result = await batch_ltz2(ctx, [ctx.Share(5123123)] * k, [r] * k, [r_bits] * k)
+    e_time = time.time()
 
     # result_open = await ctx.ShareArray(result).open()
-    # logging.info(f"total online time for secureNN method: {e_time - s_time}")
+    logging.info(f"total online time for secureNN method: {e_time - s_time}")
 
 
 
