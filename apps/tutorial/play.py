@@ -329,7 +329,7 @@ async def run(ctx, **kwargs):
     # # logging.info(f"A*B:{AtimesB} A<B:{AltB} B<A:{BltA}")
     # logging.info("Finished _prog")
 
-    k = 1500
+    k = 2000
     # # Our method
     # rs = [ctx.Share(10)] * k
     # rs_msb = [ctx.Share(0)] * k
@@ -338,6 +338,8 @@ async def run(ctx, **kwargs):
     # comparison_result = await batch_ltz(ctx, variables, rs, rs_msb)
     # e_time = time.time()
     # logging.info(f"total online time for our method: {e_time - s_time}")
+
+
     #SecureNN method
     r, r_bits = random2m(ctx, BIT_LENGTH)
     # r = ctx.Share(10)
