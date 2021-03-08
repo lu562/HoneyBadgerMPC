@@ -344,7 +344,7 @@ async def run(ctx, **kwargs):
     r, r_bits = random2m(ctx, BIT_LENGTH)
     # r = ctx.Share(10)
     # r_bits = [ctx.Share(0), ctx.Share(1), ctx.Share(0), ctx.Share(1)] + [ctx.Share(0)] * 156
-    k = 100
+
     s_time = time.time()
     # result = await ltz2(ctx, ctx.Share(5123123), r, r_bits)
     result = await batch_ltz2(ctx, [ctx.Share(5123123)] * k, [r] * k, [r_bits] * k)
