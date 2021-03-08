@@ -138,7 +138,6 @@ async def wrap_around(ctx, x_bits, r_bits):
     for i in range(BIT_LENGTH):
         c[i] = ctx.field(int(r_bits[i])) - x_bits[i] + ctx.field(1) + sum_w[i]
     c_open = await ctx.ShareArray(c).open()
-    print(c_open)
     # more steps needed to hide c.
     result = 0
     for i in range(BIT_LENGTH):
@@ -149,8 +148,7 @@ async def wrap_around(ctx, x_bits, r_bits):
 async def ltz2(ctx, a, precomputed_x, x_bits):
     y = ctx.field(2) * a # result is LSB(y)
     r = await (y + precomputed_x).open()
-    x_open = await  precomputed_x.open()
-    print(bin(x_open.value).replace('0b', '')[::-1])
+
     r_bits = bin(r.value).replace('0b', '')[::-1]
 
     if len(r_bits) < BIT_LENGTH:
@@ -331,7 +329,7 @@ async def run(ctx, **kwargs):
     # # logging.info(f"A*B:{AtimesB} A<B:{AltB} B<A:{BltA}")
     # logging.info("Finished _prog")
 
-    k = 100
+    k = 1000
     # # Our method
     # rs = [ctx.Share(10)] * k
     # rs_msb = [ctx.Share(0)] * k
