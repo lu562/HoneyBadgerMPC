@@ -217,94 +217,94 @@ async def batch_ltz2(ctx, a, precomputed_x, x_bits):
 
 async def run(ctx, **kwargs):
 
-    # # read json from files
-    # poly = {}
-    # comparison = {}
-    # values = {}
-    # divisors = {}
-    # poly_j = ''
-    # comparison_j = ''
-    # values_j = ""
-    # with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_poly.json', 'r') as json_file:
-    #     poly_j =json_file.readline()
-    # with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_comparison.json', 'r') as json_file:
-    #     comparison_j = json_file.readline()
-    # with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_value.json', 'r') as json_file:
-    #     values_j = json_file.readline()
+    # read json from files
+    poly = {}
+    comparison = {}
+    values = {}
+    divisors = {}
+    poly_j = ''
+    comparison_j = ''
+    values_j = ""
+    with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_poly.json', 'r') as json_file:
+        poly_j =json_file.readline()
+    with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_comparison.json', 'r') as json_file:
+        comparison_j = json_file.readline()
+    with open('/usr/src/HoneyBadgerMPC/apps/tutorial/json_value.json', 'r') as json_file:
+        values_j = json_file.readline()
 
-    # poly = json.loads(poly_j)
-    # comparison = json.loads(comparison_j)
-    # values = json.loads(values_j)
+    poly = json.loads(poly_j)
+    comparison = json.loads(comparison_j)
+    values = json.loads(values_j)
+    for key,value in poly.items():
+        divisors[key] = find_divisor(value)
+    rs,rs_msb = offline_batch_ltz(ctx, len(comparison))
+    # get the number of virables in each poly
+    a = random.sample(poly.keys(), 1)  
+    b = a[0] 
+    precompute_randoms, product = decision_tree_offline(ctx, len(poly), len(poly[b][0]) + len(poly[b][1]) + 1)
+
+    # online phase
+    test_input = [FixedPoint(ctx,1), FixedPoint(ctx,2), FixedPoint(ctx,3), FixedPoint(ctx,5), FixedPoint(ctx,4), FixedPoint(ctx,6), FixedPoint(ctx,1), FixedPoint(ctx,0),]
+    print("test input from client: (1, 2, 3, 5, 4, 6, 1, 0)")    
+    virables = []
+    ids = []
+    start =  time.time()
+    for node_id, terms in comparison.items():
+        ids.append(int(node_id))
+        virables.append(FixedPoint(ctx,terms[1]) - test_input[terms[0]])
+    logging.info("start secure comparison")
+    comparison_result = await batch_ltz(ctx, virables, rs, rs_msb)
+    logging.info("secure comparison finished")
+    for i in range(len(comparison_result)):
+        comparison_result[i] = (comparison_result[i] - Field(1)/Field(2)) * Field(2)
+
+    minus_one_terms = [ (i - Field(1)) for i in comparison_result]
+    plus_one_terms = [ (i + Field(1)) for i in comparison_result]
+
+    poly_terms = []
+    poly_id = []
+    # poly_print = []
     # for key,value in poly.items():
-    #     divisors[key] = find_divisor(value)
-    # rs,rs_msb = offline_batch_ltz(ctx, len(comparison))
-    # # get the number of virables in each poly
-    # a = random.sample(poly.keys(), 1)  
-    # b = a[0] 
-    # precompute_randoms, product = decision_tree_offline(ctx, len(poly), len(poly[b][0]) + len(poly[b][1]) + 1)
-
-    # # online phase
-    # test_input = [FixedPoint(ctx,1), FixedPoint(ctx,2), FixedPoint(ctx,3), FixedPoint(ctx,5), FixedPoint(ctx,4), FixedPoint(ctx,6), FixedPoint(ctx,1), FixedPoint(ctx,0),]
-    # print("test input from client: (1, 2, 3, 5, 4, 6, 1, 0)")    
-    # virables = []
-    # ids = []
-    # start =  time.time()
-    # for node_id, terms in comparison.items():
-    #     ids.append(int(node_id))
-    #     virables.append(FixedPoint(ctx,terms[1]) - test_input[terms[0]])
-    # logging.info("start secure comparison")
-    # comparison_result = await batch_ltz(ctx, virables, rs, rs_msb)
-    # logging.info("secure comparison finished")
-    # for i in range(len(comparison_result)):
-    #     comparison_result[i] = (comparison_result[i] - Field(1)/Field(2)) * Field(2)
-
-    # minus_one_terms = [ (i - Field(1)) for i in comparison_result]
-    # plus_one_terms = [ (i + Field(1)) for i in comparison_result]
-
-    # poly_terms = []
-    # poly_id = []
-    # # poly_print = []
-    # # for key,value in poly.items():
-    # #     s = ''
-    # #     for i in value[0]:
-    # #         s = s + f"(x{i} - 1)"
-    # #     for i in value[1]:
-    # #         s = s + f"(x{i} + 1)"
-    # #     # s = s + f"/{divisors[key]}"
-    # #     poly_print.append(s)    
-
-    # # print("To evaluate the decision tree, we need to evaluate 256 polynomial terms, below are first ten of them:")
-    # # for i in range(10):
-    # #     print(poly_print[i])
-
-
-
-    # for key,value in poly.items():
-    #     poly_id.append(key)
-    #     terms = []
+    #     s = ''
     #     for i in value[0]:
-    #         terms.append(minus_one_terms[ids.index(int(i))])
+    #         s = s + f"(x{i} - 1)"
     #     for i in value[1]:
-    #         terms.append(plus_one_terms[ids.index(int(i))])
-    #     terms.append(values[int(key)])
-    #     poly_terms.append(terms)
+    #         s = s + f"(x{i} + 1)"
+    #     # s = s + f"/{divisors[key]}"
+    #     poly_print.append(s)    
 
-    # logging.info("start evaluation")
-    # poly_results = await batch_decision_tree_eval(ctx, poly_terms, precompute_randoms, product)
-    # logging.info("evaluation finished")
-    # middle = time.time()
-    # for i in range(len(poly_results)):
-    #     poly_results[i] = poly_results[i] * divisors[poly_id[i]]
+    # print("To evaluate the decision tree, we need to evaluate 256 polynomial terms, below are first ten of them:")
+    # for i in range(10):
+    #     print(poly_print[i])
 
-    # stop =  time.time()
-    # # logging.info(f"time for division: {stop - middle}")
-    # logging.info(f"total online time: {stop - start}")
 
-    # open_result = await ctx.ShareArray(poly_results).open() 
-    # # print(open_result)
-    # for i in range(len(open_result)):
-    #     if open_result[i].value == 1:
-    #         print(f"The evaluation result is stored in leaf node {i}.")
+
+    for key,value in poly.items():
+        poly_id.append(key)
+        terms = []
+        for i in value[0]:
+            terms.append(minus_one_terms[ids.index(int(i))])
+        for i in value[1]:
+            terms.append(plus_one_terms[ids.index(int(i))])
+        terms.append(values[int(key)])
+        poly_terms.append(terms)
+
+    logging.info("start evaluation")
+    poly_results = await batch_decision_tree_eval(ctx, poly_terms, precompute_randoms, product)
+    logging.info("evaluation finished")
+    middle = time.time()
+    for i in range(len(poly_results)):
+        poly_results[i] = poly_results[i] * divisors[poly_id[i]]
+
+    stop =  time.time()
+    # logging.info(f"time for division: {stop - middle}")
+    logging.info(f"total online time: {stop - start}")
+
+    open_result = await ctx.ShareArray(poly_results).open() 
+    # print(open_result)
+    for i in range(len(open_result)):
+        if open_result[i].value == 1:
+            print(f"The evaluation result is stored in leaf node {i}.")
 
 
     # logging.info("Starting _prog")
@@ -329,7 +329,7 @@ async def run(ctx, **kwargs):
     # # logging.info(f"A*B:{AtimesB} A<B:{AltB} B<A:{BltA}")
     # logging.info("Finished _prog")
 
-    k = 1500
+    # k = 1500
     # # Our method
     # rs = [ctx.Share(10)] * k
     # rs_msb = [ctx.Share(0)] * k
@@ -340,18 +340,18 @@ async def run(ctx, **kwargs):
     # logging.info(f"total online time for our method: {e_time - s_time}")
 
 
-    #SecureNN method
-    r, r_bits = random2m(ctx, BIT_LENGTH)
-    # r = ctx.Share(10)
-    # r_bits = [ctx.Share(0), ctx.Share(1), ctx.Share(0), ctx.Share(1)] + [ctx.Share(0)] * 156
+    # #SecureNN method
+    # r, r_bits = random2m(ctx, BIT_LENGTH)
+    # # r = ctx.Share(10)
+    # # r_bits = [ctx.Share(0), ctx.Share(1), ctx.Share(0), ctx.Share(1)] + [ctx.Share(0)] * 156
 
-    s_time = time.time()
-    # result = await ltz2(ctx, ctx.Share(5123123), r, r_bits)
-    result = await batch_ltz2(ctx, [ctx.Share(5123123)] * k, [r] * k, [r_bits] * k)
-    e_time = time.time()
+    # s_time = time.time()
+    # # result = await ltz2(ctx, ctx.Share(5123123), r, r_bits)
+    # result = await batch_ltz2(ctx, [ctx.Share(5123123)] * k, [r] * k, [r_bits] * k)
+    # e_time = time.time()
 
-    # result_open = await ctx.ShareArray(result).open()
-    logging.info(f"total online time for secureNN method: {e_time - s_time}")
+    # # result_open = await ctx.ShareArray(result).open()
+    # logging.info(f"total online time for secureNN method: {e_time - s_time}")
 
 
 
