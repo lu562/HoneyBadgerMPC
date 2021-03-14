@@ -27,13 +27,13 @@ mpc_config = {
 # public parameters
 # sect571k1 = 0x020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001
 # secp256k1 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-p = 0x020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001
+p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFAC73
 Field = GF(p)
 group256 = ECGroup(sect571k1)
 g = group256.init(G, 999999)
 h = group256.init(G, 20)
-KAPPA = 64 # security parameter
-K = 256 # bit length of integer
+KAPPA = 32 # security parameter
+K = 150 # bit length of integer
 random.seed(2020)
 # excptions
 class FieldsNotIdentical(Exception):
@@ -540,19 +540,19 @@ if __name__ == "__main__":
     k = HbmpcConfig.N
 
     try:
-        # pp_elements = FakePreProcessedElements()
-        # if HbmpcConfig.my_id == 0:
+        pp_elements = FakePreProcessedElements()
+        if HbmpcConfig.my_id == 0:
             
-        # #     pp_elements.generate_zeros(200, HbmpcConfig.N, HbmpcConfig.t)
-        # #     pp_elements.generate_triples(150000, HbmpcConfig.N, HbmpcConfig.t)
-        # #     pp_elements.generate_bits(10000, HbmpcConfig.N, HbmpcConfig.t)
-        # #     pp_elements.generate_rands(66000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_zeros(2000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_triples(85000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_bits(1000, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.generate_rands(66600, HbmpcConfig.N, HbmpcConfig.t)
 
-        #     pp_elements.generate_triples(600, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.generate_rands(600, HbmpcConfig.N, HbmpcConfig.t)
-        #     pp_elements.preprocessing_done()
-        # else:
-        #     loop.run_until_complete(pp_elements.wait_for_preprocessing())
+            # pp_elements.generate_triples(600, HbmpcConfig.N, HbmpcConfig.t)
+            # pp_elements.generate_rands(600, HbmpcConfig.N, HbmpcConfig.t)
+            pp_elements.preprocessing_done()
+        else:
+            loop.run_until_complete(pp_elements.wait_for_preprocessing())
 
         loop.run_until_complete(
             _run(HbmpcConfig.peers, HbmpcConfig.N, HbmpcConfig.t, HbmpcConfig.my_id, k)
